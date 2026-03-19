@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paste Cleaner 8개 브랜드 비교 분석</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; color: #333; padding: 20px; font-size: 15px; }
+  h1 { text-align: center; margin: 30px 0 10px; font-size: 30px; color: #1a1a2e; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 30px; font-size: 15px; }
+
+  /* Slider Container */
+  .slider-section { position: relative; margin-bottom: 30px; }
+  .slider-wrapper { overflow: hidden; border-radius: 12px; }
+  .slider-track { display: flex; gap: 14px; transition: transform 0.4s ease; padding: 10px 4px; }
+  .summary-card {
+    min-width: 220px; flex-shrink: 0; background: white; border-radius: 12px; padding: 18px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08); text-align: center; transition: transform 0.2s;
+    cursor: pointer; text-decoration: none; color: inherit; display: block;
+  }
+  .summary-card:hover { transform: translateY(-4px); box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+  .summary-card .thumb { width: 110px; height: 110px; object-fit: contain; border-radius: 8px; margin-bottom: 8px; }
+  .summary-card .brand { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 1px; }
+  .summary-card .name { font-size: 14px; font-weight: 700; color: #1a1a2e; margin: 4px 0; }
+  .summary-card .name-kr { font-size: 12px; color: #888; margin-bottom: 6px; }
+  .summary-card .price { font-size: 24px; font-weight: 800; color: #e63946; }
+  .summary-card .per-oz { font-size: 12px; color: #999; }
+  .summary-card .rating { margin-top: 6px; font-size: 14px; }
+  .summary-card .stars { color: #f59e0b; }
+  .summary-card .reviews { font-size: 11px; color: #888; }
+  .summary-card .popularity { margin-top: 4px; font-size: 12px; color: #10b981; font-weight: 600; }
+  .summary-card .link-hint { font-size: 11px; color: #3b82f6; margin-top: 6px; opacity: 0; transition: opacity 0.2s; }
+  .summary-card:hover .link-hint { opacity: 1; }
+  .badge { display: inline-block; padding: 3px 9px; border-radius: 10px; font-size: 11px; font-weight: 600; margin-top: 5px; }
+  .badge-best { background: #fef3c7; color: #b45309; }
+  .badge-eco { background: #d1fae5; color: #065f46; }
+  .badge-value { background: #dbeafe; color: #1e40af; }
+  .badge-popular { background: #fce7f3; color: #9d174d; }
+  .badge-new { background: #ede9fe; color: #6d28d9; }
+
+  .slider-arrow {
+    position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px;
+    border-radius: 50%; background: white; border: 2px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15); cursor: pointer; font-size: 20px;
+    display: flex; align-items: center; justify-content: center; z-index: 10; transition: all 0.2s; color: #333;
+  }
+  .slider-arrow:hover { background: #e63946; color: white; border-color: #e63946; }
+  .slider-arrow.left { left: -16px; }
+  .slider-arrow.right { right: -16px; }
+  .slider-dots { display: flex; justify-content: center; gap: 8px; margin-top: 12px; }
+  .slider-dot { width: 10px; height: 10px; border-radius: 50%; background: #d1d5db; cursor: pointer; transition: background 0.2s; }
+  .slider-dot.active { background: #e63946; }
+
+  .tab-nav {
+    display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; background: white;
+    border-radius: 12px; padding: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); justify-content: center;
+  }
+  .tab-btn {
+    padding: 12px 22px; border: 2px solid #e5e7eb; border-radius: 8px; background: #f9fafb;
+    color: #555; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; white-space: nowrap;
+  }
+  .tab-btn:hover { border-color: #e63946; color: #e63946; background: #fff5f5; }
+  .tab-btn.active { background: #e63946; color: white; border-color: #e63946; box-shadow: 0 2px 8px rgba(230,57,70,0.3); }
+
+  .tab-content { display: none; animation: fadeIn 0.3s ease; }
+  .tab-content.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  .table-wrapper { overflow-x: auto; margin-bottom: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  table { width: 100%; border-collapse: collapse; background: white; font-size: 14px; }
+  thead th { background: #1a1a2e; color: white; padding: 13px 11px; text-align: center; font-weight: 600; font-size: 13px; position: sticky; top: 0; z-index: 10; }
+  thead th:first-child { text-align: left; min-width: 170px; position: sticky; left: 0; z-index: 20; background: #1a1a2e; }
+  tbody td { padding: 11px; border-bottom: 1px solid #f0f0f0; text-align: center; vertical-align: middle; }
+  tbody td:first-child { text-align: left; font-weight: 600; color: #555; background: #fafafa; position: sticky; left: 0; z-index: 5; }
+  tbody tr:hover td { background: #f8f9ff; }
+  tbody tr:hover td:first-child { background: #eef0ff; }
+  .best { color: #059669; font-weight: 700; }
+  .worst { color: #dc2626; }
+  .kr { display: block; font-size: 12px; color: #999; font-weight: 400; margin-top: 2px; }
+  .new-col { background: #faf5ff !important; }
+
+  .analysis { background: white; border-radius: 12px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+  .analysis h3 { color: #1a1a2e; margin-bottom: 12px; font-size: 17px; }
+  .analysis ul { padding-left: 20px; }
+  .analysis li { margin-bottom: 8px; line-height: 1.6; font-size: 15px; }
+  .tag { display: inline-block; padding: 3px 9px; border-radius: 6px; font-size: 12px; font-weight: 600; margin-right: 4px; }
+  .tag-price { background: #dbeafe; color: #1e40af; }
+  .tag-quality { background: #fce7f3; color: #9d174d; }
+  .tag-eco { background: #d1fae5; color: #065f46; }
+  .tag-popular { background: #fef3c7; color: #b45309; }
+  .tag-new { background: #ede9fe; color: #6d28d9; }
+
+  .section-label { font-size: 21px; font-weight: 700; color: #1a1a2e; margin: 0 0 16px; padding-bottom: 8px; border-bottom: 3px solid #e63946; display: inline-block; }
+
+  .summary-picks { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .pick-card { background: white; border-radius: 12px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border-left: 4px solid #e63946; }
+  .pick-card h3 { font-size: 16px; color: #1a1a2e; margin-bottom: 10px; }
+  .pick-card ul { padding-left: 18px; font-size: 14px; }
+  .pick-card li { margin-bottom: 7px; line-height: 1.5; }
+
+  footer { text-align: center; color: #999; font-size: 13px; margin-top: 40px; padding: 20px; }
+</style>
+</head>
+<body>
+
+<h1>Paste Cleaner 8개 브랜드 비교 분석</h1>
+<p class="subtitle">Amazon 기준 | 2026년 3월 19일 기준 데이터</p>
+
+<!-- Slider -->
+<div class="slider-section">
+  <button class="slider-arrow left" onclick="slideMove(-1)">&#8249;</button>
+  <div class="slider-wrapper">
+    <div class="slider-track" id="sliderTrack">
+      <a class="summary-card" href="https://www.amazon.com/dp/B00DU5SRIY" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/71JVOV7dQvL._AC_SY300_SX300_.jpg" alt="The Pink Stuff">
+        <div class="brand">Stardrops</div>
+        <div class="name">The Pink Stuff</div>
+        <div class="name-kr">더 핑크 스터프 만능 클리닝 페이스트</div>
+        <div class="price">$5.34</div>
+        <div class="per-oz">$0.30/oz (17.64oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.4</div>
+        <div class="reviews">233,119개 리뷰</div>
+        <div class="popularity">30K+/월 구매</div>
+        <span class="badge badge-popular">Best Seller 베스트셀러</span>
+        <span class="badge badge-value">최저가</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B07CZLZ5C1" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/71BIHGQ9W6L._AC_SY300_SX300_.jpg" alt="Shadazzle">
+        <div class="brand">Shadazzle</div>
+        <div class="name">Shadazzle Natural</div>
+        <div class="name-kr">샤다즐 천연 다목적 클리너 & 광택제</div>
+        <div class="price">$15.99</div>
+        <div class="per-oz">$1.51/oz (10.58oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.1</div>
+        <div class="reviews">8,364개 리뷰</div>
+        <div class="popularity">2K+/월 구매</div>
+        <span class="badge badge-eco">친환경</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B0D6R5GKZ1" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/71nYZDywN1L._AC_SX679_.jpg" alt="Power Paste">
+        <div class="brand">Extra Mile at Home</div>
+        <div class="name">Power Paste Bundle</div>
+        <div class="name-kr">파워 페이스트 천연 클리너 번들</div>
+        <div class="price">$29.99</div>
+        <div class="per-oz">$2.40/oz (12.5oz)</div>
+        <div class="rating"><span class="stars">★★★★★</span> 4.5</div>
+        <div class="reviews">350개 리뷰</div>
+        <div class="popularity">800+/월 구매</div>
+        <span class="badge badge-best">최고 평점</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B0G1N4B5J9" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/713e7j4bDmL._AC_SX679_.jpg" alt="RAVPUIA">
+        <div class="brand">RAVPUIA</div>
+        <div class="name">Stainless Steel Cleaner</div>
+        <div class="name-kr">스테인리스 스틸 클리너 & 광택제</div>
+        <div class="price">$19.98</div>
+        <div class="per-oz">$1.14/oz (17.6oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.2</div>
+        <div class="reviews">53개 리뷰</div>
+        <div class="popularity">700+/월 구매</div>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B0FCDMJP9P" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/61HxnrdTgkL._AC_SX466_.jpg" alt="Marble Polishing Paste">
+        <div class="brand">YUHO (Generic)</div>
+        <div class="name">Marble Polishing Paste</div>
+        <div class="name-kr">대리석 폴리싱 페이스트 전문가용</div>
+        <div class="price">$33.75</div>
+        <div class="per-oz">$0.96/oz (35.2oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 3.9</div>
+        <div class="reviews">11개 리뷰</div>
+        <div class="popularity">50+/월 구매</div>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B00IRNGYO8" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/61h55mlgx1L._AC_SY300_SX300_.jpg" alt="A-Ben-A-Qui">
+        <div class="brand">A-BEN-A-QUI</div>
+        <div class="name">A-Ben-A-Qui 20oz</div>
+        <div class="name-kr">에이벤어퀴 친환경 만능 클리닝 페이스트</div>
+        <div class="price">$11.99</div>
+        <div class="per-oz">$0.60/oz (20oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.1</div>
+        <div class="reviews">856개 리뷰</div>
+        <div class="popularity">300+/월 구매</div>
+        <span class="badge badge-eco">친환경 / Made in USA 미국산</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B074QLB1XK" target="_blank">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/71TH7Sz6GCL._AC_SX679_.jpg" alt="Astonish Oven">
+        <div class="brand">Astonish</div>
+        <div class="name">Oven & Cookware 150g</div>
+        <div class="name-kr">어스토니쉬 오븐 & 조리기구 페이스트</div>
+        <div class="price">$11.99</div>
+        <div class="per-oz">$2.27/oz (5.29oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.1</div>
+        <div class="reviews">1,649개 리뷰</div>
+        <div class="popularity">2K+/월 구매</div>
+        <span class="badge badge-best">Queen's Award 영국 왕실 수상</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+      <a class="summary-card" href="https://www.amazon.com/dp/B0DCGQ91JF" target="_blank" style="border: 2px solid #7c3aed;">
+        <img class="thumb" src="https://m.media-amazon.com/images/I/71b6gfVDDRL._AC_SX679_.jpg" alt="Astonish Original 500g">
+        <div class="brand">Astonish</div>
+        <div class="name">Original Paste 500g</div>
+        <div class="name-kr">어스토니쉬 오리지널 클리닝 페이스트 500g</div>
+        <div class="price">$9.99</div>
+        <div class="per-oz">$0.57/oz (17.64oz)</div>
+        <div class="rating"><span class="stars">★★★★☆</span> 4.4</div>
+        <div class="reviews">524개 리뷰</div>
+        <div class="popularity">100+/월 구매</div>
+        <span class="badge badge-new">NEW 신규 추가</span>
+        <span class="badge badge-value">대용량</span>
+        <div class="link-hint">Amazon에서 보기 →</div>
+      </a>
+    </div>
+  </div>
+  <button class="slider-arrow right" onclick="slideMove(1)">&#8250;</button>
+  <div class="slider-dots" id="sliderDots"></div>
+</div>
+
+<!-- Tab Navigation -->
+<div class="tab-nav">
+  <button class="tab-btn active" onclick="switchTab('price')">💰 가격</button>
+  <button class="tab-btn" onclick="switchTab('rating')">⭐ 평점</button>
+  <button class="tab-btn" onclick="switchTab('spec')">📋 스펙</button>
+  <button class="tab-btn" onclick="switchTab('usage')">🏠 사용용도</button>
+  <button class="tab-btn" onclick="switchTab('info')">📌 기타정보</button>
+  <button class="tab-btn" onclick="switchTab('keyword')">🔍 키워드</button>
+  <button class="tab-btn" onclick="switchTab('summary')">📊 종합</button>
+</div>
+
+<!-- TAB 1: 가격 비교 -->
+<div id="tab-price" class="tab-content active">
+<div class="section-label">💰 가격 비교</div>
+<div class="table-wrapper">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>일반 구매가<span class="kr">Regular Price</span></td><td class="best">$5.34</td><td>$15.99</td><td>$29.99</td><td>$19.98</td><td class="worst">$33.75</td><td>$11.99</td><td>$11.99</td><td class="new-col">$9.99</td></tr>
+    <tr><td>정가<span class="kr">List Price 원래 가격</span></td><td>$5.97</td><td>-</td><td>-</td><td>-</td><td>-</td><td>$18.99</td><td>$11.99</td><td class="new-col">-</td></tr>
+    <tr><td>할인율<span class="kr">Discount 할인</span></td><td>-11%</td><td>-</td><td>-</td><td>-</td><td>-</td><td class="best">-37%</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>정기 구독 할인<span class="kr">Subscribe &amp; Save 정기배송</span></td><td>$4.81</td><td>$15.19</td><td>$26.99</td><td>$17.98</td><td>-</td><td>-</td><td>$11.39</td><td class="new-col">$9.49</td></tr>
+    <tr><td>온스당 가격<span class="kr">Price per Ounce 단가</span></td><td class="best">$0.30</td><td>$1.51</td><td class="worst">$2.40</td><td>$1.14</td><td>$0.96</td><td>$0.60</td><td>$2.27</td><td class="new-col">$0.57</td></tr>
+    <tr><td>용량<span class="kr">Volume / Weight 무게</span></td><td>17.64 oz<span class="kr">약 500g</span></td><td>10.58 oz<span class="kr">약 300g</span></td><td>12.5 oz<span class="kr">약 354g</span></td><td>17.6 oz<span class="kr">약 500g</span></td><td>35.2 oz<span class="kr">약 1kg</span></td><td>20 oz<span class="kr">약 567g</span></td><td>5.29 oz<span class="kr">약 150g</span></td><td class="new-col">17.64 oz<span class="kr">약 500g</span></td></tr>
+    <tr><td>추가 쿠폰<span class="kr">Extra Coupon 할인 쿠폰</span></td><td>20% S&amp;S 쿠폰<span class="kr">정기배송 쿠폰</span></td><td>-</td><td>-</td><td>6% 쿠폰</td><td>-</td><td>-</td><td>-</td><td class="new-col">-</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- TAB 2: 평점 & 인기도 -->
+<div id="tab-rating" class="tab-content">
+<div class="section-label">⭐ 평점 & 인기도 비교</div>
+<div class="table-wrapper">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>평점<span class="kr">Rating 별점</span></td><td>4.4 / 5</td><td>4.1 / 5</td><td class="best">4.5 / 5</td><td>4.2 / 5</td><td class="worst">3.9 / 5</td><td>4.1 / 5</td><td>4.1 / 5</td><td class="new-col">4.4 / 5</td></tr>
+    <tr><td>리뷰 수<span class="kr">Reviews 고객 리뷰</span></td><td class="best">233,119</td><td>8,364</td><td>350</td><td>53</td><td class="worst">11</td><td>856</td><td>1,649</td><td class="new-col">524</td></tr>
+    <tr><td>월간 구매량<span class="kr">Monthly Purchases 월 판매</span></td><td class="best">30K+<span class="kr">3만 건 이상</span></td><td>2K+<span class="kr">2천 건 이상</span></td><td>800+<span class="kr">800건 이상</span></td><td>700+<span class="kr">700건 이상</span></td><td class="worst">50+<span class="kr">50건 이상</span></td><td>300+<span class="kr">300건 이상</span></td><td>2K+<span class="kr">2천 건 이상</span></td><td class="new-col">100+<span class="kr">100건 이상</span></td></tr>
+    <tr><td>아마존 초이스<span class="kr">Amazon's Choice 아마존 추천</span></td><td class="best">✔ 선정됨</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>판매 순위 (대분류)<span class="kr">Best Sellers Rank 전체 순위</span></td><td class="best">#361</td><td>#1,278</td><td>#12,351</td><td>#33,222</td><td>#35,937</td><td>#64,351</td><td>#12,157</td><td class="new-col worst">#108,092</td></tr>
+    <tr><td>판매 순위 (소분류)<span class="kr">Sub-category Rank 세부 순위</span></td><td class="best">#3</td><td>#12</td><td>#19</td><td>#431</td><td>#45</td><td>#795</td><td>#12</td><td class="new-col">#1,333</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- TAB 3: 제품 스펙 -->
+<div id="tab-spec" class="tab-content">
+<div class="section-label">📋 제품 스펙 비교</div>
+<div class="table-wrapper">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>제형<span class="kr">Item Form 형태</span></td><td>Paste 페이스트</td><td>Paste 페이스트</td><td>Paste 페이스트</td><td>Paste 페이스트</td><td>Paste 페이스트</td><td>Paste 페이스트</td><td>Paste 페이스트</td><td class="new-col">Paste 페이스트</td></tr>
+    <tr><td>향<span class="kr">Scent 향기</span></td><td>Rhubarb<span class="kr">루바브향</span></td><td>Eucalyptus<span class="kr">유칼립투스 (5종 선택)</span></td><td>Lime<span class="kr">라임향</span></td><td>Orange<span class="kr">오렌지향</span></td><td>Unscented<span class="kr">무향</span></td><td>Unscented<span class="kr">무향</span></td><td>Citrus<span class="kr">시트러스향</span></td><td class="new-col">Mandarin &amp; Peaches<span class="kr">만다린 &amp; 피치향 🍑</span></td></tr>
+    <tr><td>주요 성분<span class="kr">Key Ingredients 핵심 원료</span></td><td>Sodium Palmate, Quartz<span class="kr">팜산나트륨, 석영</span></td><td>Natural Ingredients<span class="kr">천연 성분</span></td><td>-</td><td>Ultrafine Silicon Powder<span class="kr">초미세 실리콘 파우더</span></td><td>-</td><td>Natural Mineral<span class="kr">천연 미네랄</span></td><td>Sodium Bicarbonate<span class="kr">베이킹소다</span></td><td class="new-col">Soap, Limonene, Surfactants<span class="kr">비누, 리모넨, 계면활성제</span></td></tr>
+    <tr><td>연마성<span class="kr">Abrasiveness 표면 긁힘 여부</span></td><td>Abrasive<span class="kr">연마성 있음 ⚠️</span></td><td>Non-abrasive<span class="kr">비연마성 (안전)</span></td><td>-</td><td>Non-abrasive<span class="kr">비연마성 (안전)</span></td><td>-</td><td>Non-abrasive<span class="kr">비연마성 (안전)</span></td><td>Abrasive<span class="kr">연마성 있음 ⚠️</span></td><td class="new-col">-<span class="kr">표기 없음</span></td></tr>
+    <tr><td>특수 기능<span class="kr">Special Features 특징</span></td><td>Streak Free<span class="kr">자국 안 남음</span></td><td>All Purpose<span class="kr">다목적 세정+광택</span></td><td>Scrub Brush 포함<span class="kr">브러시 세트 동봉</span></td><td>Residue Free<span class="kr">잔여물 없음</span></td><td>Stone Polish &amp; Seal<span class="kr">석재 광택 &amp; 코팅 보호</span></td><td>Non-toxic<span class="kr">무독성</span></td><td>Non-Toxic, Vegan<span class="kr">무독성, 비건</span></td><td class="new-col">Cruelty Free, Chemical-Free<span class="kr">동물실험 無, 화학물질 無</span></td></tr>
+    <tr><td>부속품<span class="kr">Accessories 함께 오는 것</span></td><td>-<span class="kr">없음</span></td><td>Sponge<span class="kr">스펀지 1개</span></td><td>Sponge + Brush<span class="kr">스펀지 + 틈새 브러시</span></td><td>2 Sponges<span class="kr">양면 스펀지 2개</span></td><td>-<span class="kr">없음</span></td><td>-<span class="kr">없음</span></td><td>-<span class="kr">없음</span></td><td class="new-col">-<span class="kr">없음</span></td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- TAB 4: 사용용도 -->
+<div id="tab-usage" class="tab-content">
+<div class="section-label">🏠 사용 용도 & 친환경/안전성</div>
+<div class="table-wrapper" style="margin-bottom:24px;">
+<table>
+  <thead><tr>
+    <th>사용 가능 표면<span class="kr">Compatible Surfaces</span></th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>주요 타겟<span class="kr">Main Target 주 사용처</span></td><td>다목적 만능<span class="kr">All Purpose</span></td><td>다목적 + 광택<span class="kr">Clean &amp; Polish</span></td><td>그라우트/타일<span class="kr">Grout / Tile 줄눈</span></td><td>스테인리스 스틸<span class="kr">Stainless Steel</span></td><td>대리석/석재<span class="kr">Marble / Stone</span></td><td>친환경 다목적<span class="kr">Eco All Purpose</span></td><td>오븐/조리기구<span class="kr">Oven / Cookware</span></td><td class="new-col">다목적 만능<span class="kr">Multi-Surface 만능</span></td></tr>
+    <tr><td>주방<span class="kr">Kitchen</span></td><td>✔</td><td>✔</td><td>✔</td><td>✔</td><td>✔ (석재만)</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>욕실<span class="kr">Bathroom</span></td><td>✔</td><td>✔</td><td>✔</td><td>-</td><td>✔ (석재만)</td><td>✔</td><td>-</td><td class="new-col">✔</td></tr>
+    <tr><td>오븐/스토브<span class="kr">Oven / Stove</span></td><td>✔</td><td>✔</td><td>-</td><td>✔</td><td>-</td><td>-</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>유리<span class="kr">Glass</span></td><td>✔</td><td>✔</td><td>-</td><td>✔</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>스테인리스 스틸<span class="kr">Stainless Steel</span></td><td>✔</td><td>✔</td><td>-</td><td>✔</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>타일/줄눈<span class="kr">Tile / Grout</span></td><td>✔</td><td>-</td><td>✔</td><td>-</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>대리석/석재<span class="kr">Marble / Stone</span></td><td>-</td><td>✔</td><td>-</td><td>-</td><td>✔</td><td>-</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>가구<span class="kr">Furniture</span></td><td>✔</td><td>✔</td><td>-</td><td>-</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>자동차<span class="kr">Car 차량</span></td><td>-</td><td>✔</td><td>-</td><td>✔</td><td>-</td><td>-</td><td>-</td><td class="new-col">-</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="section-label">🌿 친환경 & 안전성</div>
+<div class="table-wrapper">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>무독성<span class="kr">Non-Toxic 독성 없음</span></td><td>-</td><td>✔</td><td>✔</td><td>-</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔<span class="kr">Chemical-Free</span></td></tr>
+    <tr><td>친환경<span class="kr">Eco-Friendly 환경 친화적</span></td><td>-</td><td>✔</td><td>✔</td><td>-</td><td>-</td><td>✔</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>생분해성<span class="kr">Biodegradable 자연 분해</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>✔</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>비건/동물실험 안함<span class="kr">Vegan / Cruelty-Free</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td><td>✔</td><td class="new-col">✔</td></tr>
+    <tr><td>어린이 안전<span class="kr">Child Safety 아이 안전</span></td><td>Keep away<span class="kr">어린이 접근 금지 ⚠️</span></td><td>-</td><td>Kids &amp; Pets safe<span class="kr">어린이/반려동물 안전 ✔</span></td><td>-</td><td>-</td><td>Child Safe<span class="kr">어린이 안전 기준 충족 ✔</span></td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>무향 여부<span class="kr">Unscented 향 없음</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>✔</td><td>✔</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>제조국<span class="kr">Origin 원산지</span></td><td>UK 영국 🇬🇧</td><td>-</td><td>-</td><td>-</td><td>-</td><td>USA 미국 🇺🇸</td><td>UK 영국 🇬🇧</td><td class="new-col">UK 영국 🇬🇧</td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- TAB 5: 기타정보 -->
+<div id="tab-info" class="tab-content">
+<div class="section-label">📌 브랜드 & 기타 정보</div>
+<div class="table-wrapper" style="margin-bottom:24px;">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>브랜드<span class="kr">Brand 브랜드명</span></td><td>Stardrops<span class="kr">스타드롭스</span></td><td>Shadazzle<span class="kr">샤다즐</span></td><td>Extra Mile at Home<span class="kr">엑스트라 마일 앳 홈</span></td><td>RAVPUIA<span class="kr">라브푸이아</span></td><td>Generic (YUHO)<span class="kr">제네릭 (유호)</span></td><td>A-BEN-A-QUI<span class="kr">에이벤어퀴</span></td><td>Astonish<span class="kr">어스토니쉬</span></td><td class="new-col">Astonish<span class="kr">어스토니쉬 (같은 브랜드)</span></td></tr>
+    <tr><td>출시일<span class="kr">Launch Date 아마존 등록일</span></td><td>2012.08.08</td><td>2018.08.03</td><td>2024.06.04</td><td>2025.12.17</td><td>2025.06.06</td><td>-</td><td>2017.08.13</td><td class="new-col">2024.08.07</td></tr>
+    <tr><td>소규모 사업자<span class="kr">Small Business 스몰 비즈니스</span></td><td>-</td><td>-</td><td>✔<span class="kr">소규모 사업자</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td class="new-col">-</td></tr>
+    <tr><td>수상/인증<span class="kr">Awards 수상 이력</span></td><td>Amazon's Choice<span class="kr">아마존 추천 선정</span></td><td>-</td><td>-</td><td>-</td><td>-</td><td>Eco-Certified<span class="kr">친환경 인증</span></td><td>Queen's Award<span class="kr">영국 왕실 기업상 수상</span></td><td class="new-col">Queen's Award<span class="kr">영국 왕실 기업상 (동일 브랜드)</span></td></tr>
+    <tr><td>카테고리<span class="kr">Category 분류</span></td><td>Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td><td>Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td><td>Tools &amp; Home<span class="kr">도구 &amp; 홈</span></td><td>Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td><td>Industrial<span class="kr">산업용품</span></td><td>Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td><td>Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td><td class="new-col">Health &amp; Household<span class="kr">건강 &amp; 생활용품</span></td></tr>
+    <tr><td>ASIN<span class="kr">아마존 고유번호</span></td><td>B00DU5SRIY</td><td>B07CZLZ5C1</td><td>B0D6R5GKZ1</td><td>B0G1N4B5J9</td><td>B0FCDMJP9P</td><td>B00IRNGYO8</td><td>B074QLB1XK</td><td class="new-col">B0DCGQ91JF</td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="section-label">🎬 상세페이지 & 영상 유무</div>
+<div class="table-wrapper">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>A+ 상세페이지<span class="kr">Enhanced Brand Content 브랜드 상세</span></td><td class="best">✔ 풍부<span class="kr">이미지 11개+</span></td><td class="best">✔ 매우 풍부<span class="kr">이미지 38개+</span></td><td>✔ 기본<span class="kr">이미지 4개</span></td><td>✔ 보통<span class="kr">이미지 7개</span></td><td class="worst">✘ 없음<span class="kr">A+ 콘텐츠 없음</span></td><td class="worst">✘ 없음<span class="kr">A+ 콘텐츠 없음</span></td><td class="best">✔ 풍부<span class="kr">이미지 21개+</span></td><td class="new-col best">✔ 풍부<span class="kr">이미지 27개+</span></td></tr>
+    <tr><td>A+ 상세 내용<span class="kr">A+ Content Details 콘텐츠 내용</span></td><td>From the Manufacturer<span class="kr">제조사 소개 섹션</span></td><td>5가지 향 비교 + 사용법<span class="kr">향별 비교 + 활용법 안내</span></td><td>제품 설명 이미지<span class="kr">기본 설명 이미지</span></td><td>제품 특징 이미지<span class="kr">기능 소개 이미지</span></td><td>-</td><td>-</td><td>Simple Ingredients + Royal Seal<span class="kr">간단한 성분 + 왕실 인증 마크</span></td><td class="new-col">Simple Ingredients + Royal Seal + A Better Way<span class="kr">성분 + 왕실인증 + 브랜드 철학</span></td></tr>
+    <tr><td>브랜드 소개 섹션<span class="kr">From the Brand 브랜드 스토리</span></td><td>✔<span class="kr">있음</span></td><td>✘<span class="kr">없음</span></td><td>✘<span class="kr">없음</span></td><td>✘<span class="kr">없음</span></td><td>✘<span class="kr">없음</span></td><td>✘<span class="kr">없음</span></td><td>✔<span class="kr">있음</span></td><td class="new-col">✔<span class="kr">있음 (이미지 14개)</span></td></tr>
+    <tr><td>제품 영상<span class="kr">Product Video 동영상</span></td><td>✔<span class="kr">인플루언서/리뷰 영상</span></td><td>✔<span class="kr">영상 있음</span></td><td>✔<span class="kr">영상 있음</span></td><td>✔<span class="kr">영상 있음</span></td><td>✔<span class="kr">영상 있음</span></td><td>✔<span class="kr">인플루언서 리뷰 영상</span></td><td>✔<span class="kr">인플루언서 리뷰 영상</span></td><td class="new-col">✔<span class="kr">인플루언서 리뷰 영상</span></td></tr>
+    <tr><td>콘텐츠 완성도<span class="kr">Content Quality 콘텐츠 품질</span></td><td class="best" style="font-size:19px">★★★★★<span class="kr">최고 수준</span></td><td class="best" style="font-size:19px">★★★★★<span class="kr">최고 수준</span></td><td style="font-size:19px">★★★☆☆<span class="kr">기본 수준</span></td><td style="font-size:19px">★★★★☆<span class="kr">양호</span></td><td class="worst" style="font-size:19px">★★☆☆☆<span class="kr">미흡</span></td><td class="worst" style="font-size:19px">★★☆☆☆<span class="kr">미흡</span></td><td class="best" style="font-size:19px">★★★★★<span class="kr">최고 수준</span></td><td class="new-col best" style="font-size:19px">★★★★★<span class="kr">최고 수준</span></td></tr>
+  </tbody>
+</table>
+</div>
+</div>
+
+<!-- TAB 6: 키워드 -->
+<div id="tab-keyword" class="tab-content">
+<div class="section-label">🔍 제품별 주요 키워드</div>
+<div class="table-wrapper" style="margin-bottom:24px;">
+<table>
+  <thead><tr>
+    <th>항목</th>
+    <th>The Pink Stuff<span class="kr">핑크 스터프</span></th>
+    <th>Shadazzle<span class="kr">샤다즐</span></th>
+    <th>Power Paste<span class="kr">파워 페이스트</span></th>
+    <th>RAVPUIA<span class="kr">라브푸이아</span></th>
+    <th>Marble Paste<span class="kr">마블 페이스트</span></th>
+    <th>A-Ben-A-Qui<span class="kr">에이벤어퀴</span></th>
+    <th>Astonish 150g<span class="kr">어스토니쉬 오븐</span></th>
+    <th style="background:#4c1d95;">Astonish 500g<span class="kr">어스토니쉬 오리지널 🆕</span></th>
+  </tr></thead>
+  <tbody>
+    <tr><td>타이틀 키워드<span class="kr">Title Keywords 상품명 키워드</span></td><td>Miracle, Cleaning Paste, All Purpose, Kitchens, Bathrooms<span class="kr">기적, 만능 클리닝, 주방, 욕실</span></td><td>Natural, All Purpose, Cleaner and Polish, Eco friendly<span class="kr">천연, 다목적, 세정+광택, 친환경</span></td><td>Power Paste, Natural, Grout Cleaner, Tile, Brush<span class="kr">파워 페이스트, 천연, 줄눈, 타일, 브러시</span></td><td>Stainless Steel, Cleaner &amp; Polish, Heavy Duty<span class="kr">스테인리스, 세정+광택, 강력</span></td><td>Marble Polishing, Professional, Stone Sealer<span class="kr">대리석 광택, 전문가용, 석재 보호</span></td><td>All Purpose, Environmentally Safe, Cleaning Paste<span class="kr">다목적, 환경 안전, 클리닝 페이스트</span></td><td>Oven &amp; Cookware, Heavy Duty, Degreaser<span class="kr">오븐&amp;조리기구, 강력, 기름때 제거</span></td><td class="new-col">Multi Surface, Stain Remover, Grease Buster, Chemical-Free<span class="kr">다목적, 얼룩 제거, 기름때, 무화학</span></td></tr>
+    <tr><td>페이지 핵심 키워드<span class="kr">Page Core Keywords 상세페이지 핵심어</span></td><td>Streak Free, Versatile, Miracle<span class="kr">자국없음, 다용도, 기적</span></td><td>Clean &amp; Polish in one step, Ecological<span class="kr">한번에 세정+광택, 생태적</span></td><td>Grout, Shower Tile, Kids &amp; Pets Safe<span class="kr">줄눈, 샤워타일, 아이/반려동물 안전</span></td><td>Residue Free, Non-abrasive, Complete Kit<span class="kr">잔여물없음, 비연마, 풀세트</span></td><td>Stone Polish, Sealer, Professional Grade<span class="kr">석재광택, 보호코팅, 전문가급</span></td><td>Non-Toxic, Biodegradable, Made in USA<span class="kr">무독성, 생분해성, 미국산</span></td><td>Baked On Grease, Vegan, Queen's Award<span class="kr">눌어붙은 기름때, 비건, 왕실 수상</span></td><td class="new-col">Chemical-Free, Cruelty Free, Mandarin Peaches, UK Made<span class="kr">무화학, 동물실험無, 만다린피치향, 영국산</span></td></tr>
+    <tr><td>리뷰 예상 키워드<span class="kr">Review Keywords 리뷰 자주 나오는 말</span></td><td>amazing, easy, stains, grease<span class="kr">놀라운, 쉬운, 얼룩, 기름때</span></td><td>shiny, natural, polish, eco<span class="kr">반짝반짝, 천연, 광택, 친환경</span></td><td>grout, tile, brush, deep clean<span class="kr">줄눈, 타일, 브러시, 딥클리닝</span></td><td>stainless steel, shine, no scratches<span class="kr">스테인리스, 광나요, 긁힘없음</span></td><td>marble, shine, countertop<span class="kr">대리석, 광택, 조리대</span></td><td>safe, eco, non-toxic, gentle<span class="kr">안전, 친환경, 무독성, 순한</span></td><td>oven, grease, baked on, paste works<span class="kr">오븐, 기름때, 눌어붙은, 잘 됨</span></td><td class="new-col">smells great, multi surface, kitchen, grease, gentle<span class="kr">향 좋음, 다용도, 주방, 기름때, 순함</span></td></tr>
+    <tr><td>경쟁 포지셔닝<span class="kr">Keyword Position 시장 포지션</span></td><td style="background:#d1fae5"><strong>다목적 만능 클리너</strong><span class="kr">All-Purpose Champion 만능 1위</span></td><td style="background:#dbeafe"><strong>천연 세정+광택 2in1</strong><span class="kr">Natural Clean+Polish 천연 복합</span></td><td style="background:#fce7f3"><strong>그라우트/타일 전문</strong><span class="kr">Grout Specialist 줄눈 전문</span></td><td style="background:#f3e8ff"><strong>스테인리스 전문</strong><span class="kr">Stainless Expert 스틸 전문</span></td><td style="background:#fef3c7"><strong>대리석 전문</strong><span class="kr">Marble Pro 석재 전문</span></td><td style="background:#d1fae5"><strong>친환경 안전 클리너</strong><span class="kr">Eco-Safe Cleaner 친환경 안전</span></td><td style="background:#ffe4e6"><strong>오븐/쿡웨어 전문</strong><span class="kr">Oven/Cookware Pro 오븐 전문</span></td><td class="new-col" style="background:#ede9fe"><strong>만능 대용량 + 향기</strong><span class="kr">All-Purpose Large + Scent 대용량 만능</span></td></tr>
+  </tbody>
+</table>
+</div>
+
+<div class="section-label">📈 Amazon "paste cleaner" 검색 키워드 빈도 분석</div>
+<div class="analysis">
+  <h3>상품명에 가장 많이 등장하는 키워드 TOP 15 <span style="font-weight:400;font-size:14px;color:#888;">(검색 결과 상위 30개 상품 기준)</span></h3>
+  <div class="table-wrapper" style="margin-top:12px; box-shadow:none;">
+  <table>
+    <thead><tr>
+      <th style="min-width:50px;">순위</th>
+      <th>키워드 (영문)</th>
+      <th>한글 뜻</th>
+      <th style="min-width:80px;">등장 빈도</th>
+      <th>분석 (한글)</th>
+    </tr></thead>
+    <tbody>
+      <tr style="background:#d1fae5;"><td>1</td><td><strong>Cleaner / Cleaning</strong></td><td>클리너 / 세정제</td><td><strong>28/30</strong></td><td>거의 모든 상품에 포함되는 필수 키워드</td></tr>
+      <tr style="background:#d1fae5;"><td>2</td><td><strong>Paste</strong></td><td>페이스트 (반죽형)</td><td><strong>22/30</strong></td><td>제형을 나타내는 핵심 키워드</td></tr>
+      <tr style="background:#dbeafe;"><td>3</td><td><strong>All Purpose / Multi-Purpose</strong></td><td>다목적 / 만능</td><td><strong>18/30</strong></td><td>가장 강력한 포지셔닝 키워드</td></tr>
+      <tr style="background:#dbeafe;"><td>4</td><td><strong>Kitchen</strong></td><td>주방</td><td><strong>14/30</strong></td><td>가장 많이 언급되는 사용 장소</td></tr>
+      <tr><td>5</td><td><strong>Bathroom</strong></td><td>욕실</td><td><strong>12/30</strong></td><td>주방 다음으로 많은 사용 장소</td></tr>
+      <tr><td>6</td><td><strong>Stainless Steel</strong></td><td>스테인리스 스틸</td><td><strong>10/30</strong></td><td>특수 표면 키워드 중 1위</td></tr>
+      <tr><td>7</td><td><strong>Heavy Duty</strong></td><td>강력한 / 헤비듀티</td><td><strong>9/30</strong></td><td>세정력 강조 키워드</td></tr>
+      <tr><td>8</td><td><strong>Grease / Grime</strong></td><td>기름때 / 찌든때</td><td><strong>9/30</strong></td><td>고객의 실제 고민을 반영하는 키워드</td></tr>
+      <tr><td>9</td><td><strong>Oven / Cookware</strong></td><td>오븐 / 조리기구</td><td><strong>8/30</strong></td><td>주방 내 세부 사용처</td></tr>
+      <tr><td>10</td><td><strong>Natural / Eco-Friendly</strong></td><td>천연 / 친환경</td><td><strong>8/30</strong></td><td>친환경 소비 트렌드 반영</td></tr>
+      <tr><td>11</td><td><strong>Sponge</strong></td><td>스펀지</td><td><strong>7/30</strong></td><td>부속품/번들 상품 강조</td></tr>
+      <tr><td>12</td><td><strong>Tile / Grout</strong></td><td>타일 / 줄눈</td><td><strong>7/30</strong></td><td>특수 표면 키워드</td></tr>
+      <tr><td>13</td><td><strong>Polish</strong></td><td>광택 / 폴리시</td><td><strong>6/30</strong></td><td>세정+광택 복합 기능</td></tr>
+      <tr><td>14</td><td><strong>Non-Toxic</strong></td><td>무독성</td><td><strong>5/30</strong></td><td>안전성 강조</td></tr>
+      <tr><td>15</td><td><strong>Stains / Removes</strong></td><td>얼룩 / 제거</td><td><strong>5/30</strong></td><td>효과(결과) 중심 키워드</td></tr>
+    </tbody>
+  </table>
+  </div>
+</div>
+
+<div class="analysis" style="border-left: 4px solid #3b82f6;">
+  <h3>🔑 키워드 인사이트 요약</h3>
+  <ul>
+    <li><strong>필수 키워드 3대장:</strong> "Cleaning Paste" + "All Purpose" + "Cleaner" → 이 3개가 없으면 검색 노출이 어려움</li>
+    <li><strong>장소 키워드 순서:</strong> Kitchen 주방 > Bathroom 욕실 > Oven 오븐 순으로 고객이 가장 많이 찾는 사용처</li>
+    <li><strong>차별화 키워드:</strong> "Heavy Duty 강력", "Natural 천연", "Non-Toxic 무독성" → 제품 포지셔닝에 따라 선택</li>
+    <li><strong>문제 해결 키워드:</strong> "Grease 기름때", "Grime 찌든때", "Stains 얼룩", "Baked On 눌어붙은" → 고객의 실제 고민 반영</li>
+    <li><strong>트렌드 키워드:</strong> "Natural 천연", "Eco-Friendly 친환경", "Non-Toxic 무독성", "Vegan 비건" → 친환경 트렌드 상승 중</li>
+    <li><strong>번들 키워드:</strong> "with Sponge 스펀지 포함", "Bundle 번들", "Kit 세트" → 부속품 포함 상품이 경쟁력 높음</li>
+  </ul>
+</div>
+</div>
+
+<!-- TAB 7: 종합 -->
+<div id="tab-summary" class="tab-content">
+<div class="section-label">📊 종합 분석 & 추천</div>
+
+<div class="summary-picks">
+  <div class="pick-card" style="border-left-color:#3b82f6;">
+    <h3><span class="tag tag-price">가성비 최고</span> The Pink Stuff 핑크 스터프</h3>
+    <ul>
+      <li>온스당 <strong>$0.30</strong>으로 8개 중 압도적 최저가</li>
+      <li>233,119개 리뷰 / 월 30K+ 구매로 시장 점유율 1위</li>
+      <li>Amazon's Choice 선정, 소분류 순위 #3</li>
+      <li>⚠️ 단점: 연마성(Abrasive) 있어 민감한 표면 주의</li>
+    </ul>
+  </div>
+  <div class="pick-card" style="border-left-color:#ec4899;">
+    <h3><span class="tag tag-quality">최고 평점</span> Power Paste 파워 페이스트</h3>
+    <ul>
+      <li>8개 중 유일하게 <strong>4.5점</strong> 달성 (최고 평점)</li>
+      <li>스펀지 + 틈새 브러시 포함 번들 → 바로 사용 가능</li>
+      <li>Small Business 소규모 사업자 제품</li>
+      <li>⚠️ 단점: 온스당 $2.40으로 가장 비싼 가격대</li>
+    </ul>
+  </div>
+  <div class="pick-card" style="border-left-color:#10b981;">
+    <h3><span class="tag tag-eco">친환경 최강</span> A-Ben-A-Qui 에이벤어퀴</h3>
+    <ul>
+      <li>무독성, 생분해성, 어린이 안전 기준 충족</li>
+      <li><strong>Made in USA</strong> 미국산, 친환경 인증 완료</li>
+      <li>온스당 $0.60으로 3번째로 저렴</li>
+      <li>⚠️ 단점: 판매 순위 #64,351로 인지도 낮음</li>
+    </ul>
+  </div>
+  <div class="pick-card" style="border-left-color:#f59e0b;">
+    <h3><span class="tag tag-popular">오븐 전문</span> Astonish 150g 어스토니쉬 오븐</h3>
+    <ul>
+      <li>영국 왕실 기업상(Queen's Award) 수상</li>
+      <li>비건/동물실험 미실시, 무독성</li>
+      <li>A+ 콘텐츠 최고 수준 (이미지 21개+)</li>
+      <li>⚠️ 단점: 5.29oz로 용량 가장 적음, 온스당 $2.27</li>
+    </ul>
+  </div>
+  <div class="pick-card" style="border-left-color:#7c3aed;">
+    <h3><span class="tag tag-new">신규 추가</span> Astonish 500g 어스토니쉬 오리지널</h3>
+    <ul>
+      <li>같은 Astonish 브랜드의 <strong>대용량 만능</strong> 버전 (500g)</li>
+      <li>온스당 <strong>$0.57</strong>로 핑크 스터프 다음 가성비 (2위)</li>
+      <li>평점 4.4로 높음, 만다린 &amp; 피치 향 🍑</li>
+      <li>Chemical-Free + Cruelty Free, A+ 콘텐츠 27개 이미지</li>
+      <li>⚠️ 단점: 월 100+ 구매로 아직 인지도 성장 중</li>
+    </ul>
+  </div>
+</div>
+
+<div class="analysis" style="margin-top:20px;">
+  <h3><span class="tag tag-popular">특수 용도별 추천</span> 용도에 따라 이 제품!</h3>
+  <ul>
+    <li><strong>🏠 만능 다목적:</strong> The Pink Stuff 핑크 스터프 — 가격, 리뷰, 인기 모두 압도적 1위</li>
+    <li><strong>🏠 만능 + 향기:</strong> Astonish Original 500g 어스토니쉬 오리지널 — 대용량 만능 + 만다린피치향 + 무화학</li>
+    <li><strong>🍳 오븐/조리기구 전문:</strong> Astonish 150g 어스토니쉬 오븐 — 영국 왕실 수상, 비건 인증</li>
+    <li><strong>🔩 스테인리스 전문:</strong> RAVPUIA 라브푸이아 — 양면 스펀지 2개 포함, 오렌지향</li>
+    <li><strong>🪨 대리석/석재 전문:</strong> Marble Paste 마블 페이스트 — 유일한 석재 전용 제품 (35.2oz 대용량)</li>
+    <li><strong>✨ 세정+광택 복합:</strong> Shadazzle 샤다즐 — 한 번에 세정+광택, 5가지 향 선택 가능</li>
+    <li><strong>🌿 친환경/안전:</strong> A-Ben-A-Qui 에이벤어퀴 — 어린이 안전, 생분해성, 미국산</li>
+    <li><strong>🧹 타일/줄눈 전문:</strong> Power Paste 파워 페이스트 — 최고 평점, 브러시 세트 포함</li>
+  </ul>
+</div>
+
+<div class="analysis" style="background: linear-gradient(135deg, #fef3c7, #fff7ed); border-left: 4px solid #f59e0b;">
+  <h3>🏆 최종 추천 TOP 3</h3>
+  <ul>
+    <li><strong>1위 가성비 + 다목적:</strong> The Pink Stuff ($0.30/oz) — 가격, 리뷰, 인기 모두 1위. 처음 써보는 분께 추천</li>
+    <li><strong>2위 가성비 + 대용량 + 무화학:</strong> Astonish Original 500g ($0.57/oz) — 평점 4.4, 화학물질 無, 대용량</li>
+    <li><strong>3위 친환경 + 안전성:</strong> A-Ben-A-Qui ($0.60/oz) — 아이/반려동물 있는 가정에 추천</li>
+  </ul>
+</div>
+</div>
+
+<footer>
+  Paste Cleaner 비교 분석 | Amazon 데이터 기준 2026.03.19 | 8개 브랜드 비교
+</footer>
+
+<script>
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-' + tabId).classList.add('active');
+  const tabMap = ['price','rating','spec','usage','info','keyword','summary'];
+  const idx = tabMap.indexOf(tabId);
+  if (idx >= 0) document.querySelectorAll('.tab-btn')[idx].classList.add('active');
+  document.querySelector('.tab-nav').scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+let slideIndex = 0;
+const track = document.getElementById('sliderTrack');
+const cards = track.querySelectorAll('.summary-card');
+const totalCards = cards.length;
+let visibleCards = getVisibleCount();
+let maxIndex = Math.max(0, totalCards - visibleCards);
+
+function getVisibleCount() {
+  const wrapperWidth = track.parentElement.offsetWidth;
+  const cardWidth = 220 + 14;
+  return Math.floor(wrapperWidth / cardWidth) || 1;
+}
+
+function updateSlider() {
+  const cardWidth = cards[0].offsetWidth + 14;
+  track.style.transform = 'translateX(-' + (slideIndex * cardWidth) + 'px)';
+  updateDots();
+}
+
+function slideMove(dir) {
+  visibleCards = getVisibleCount();
+  maxIndex = Math.max(0, totalCards - visibleCards);
+  slideIndex = Math.max(0, Math.min(slideIndex + dir, maxIndex));
+  updateSlider();
+}
+
+function createDots() {
+  const dotsContainer = document.getElementById('sliderDots');
+  dotsContainer.innerHTML = '';
+  visibleCards = getVisibleCount();
+  maxIndex = Math.max(0, totalCards - visibleCards);
+  for (let i = 0; i <= maxIndex; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
+    dot.onclick = function() { slideIndex = i; updateSlider(); };
+    dotsContainer.appendChild(dot);
+  }
+}
+
+function updateDots() {
+  const dots = document.querySelectorAll('.slider-dot');
+  dots.forEach((d, i) => d.classList.toggle('active', i === slideIndex));
+}
+
+let startX = 0, isDragging = false;
+track.addEventListener('touchstart', e => { startX = e.touches[0].clientX; isDragging = true; });
+track.addEventListener('touchend', e => { if (!isDragging) return; isDragging = false; const diff = startX - e.changedTouches[0].clientX; if (Math.abs(diff) > 50) slideMove(diff > 0 ? 1 : -1); });
+track.addEventListener('mousedown', e => { startX = e.clientX; isDragging = true; e.preventDefault(); });
+document.addEventListener('mouseup', e => { if (!isDragging) return; isDragging = false; const diff = startX - e.clientX; if (Math.abs(diff) > 50) slideMove(diff > 0 ? 1 : -1); });
+
+createDots();
+window.addEventListener('resize', () => { visibleCards = getVisibleCount(); maxIndex = Math.max(0, totalCards - visibleCards); slideIndex = Math.min(slideIndex, maxIndex); createDots(); updateSlider(); });
+</script>
+
+</body>
+</html>
